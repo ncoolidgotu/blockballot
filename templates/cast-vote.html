@@ -1,0 +1,28 @@
+{% include "header.html" %}
+
+<body>
+    {% include "navbar.html" %}
+    <div class="content"> 
+        <h1>Cast Vote</h1> 
+        <div class="form-container"> 
+            <form> 
+                <label>Who to choose:</label><br> 
+
+                <input type="radio" id="person1" name="person" value="person1" onclick="showPerson3NameField()"> 
+                <label for="person1">Person 1</label><br> 
+
+                <input type="radio" id="person2" name="person" value="person2" onclick="showPerson3NameField()"> 
+                <label for="person2">Person 2</label><br> 
+
+                <input type="radio" id="person3" name="person" value="person3" onclick="showPerson3NameField()"> 
+                <label for="person3">Person 3</label><br><br> 
+                    <div id="person3NameField" class="hidden"> 
+                        <label for="person3Name">Name of Person 3:</label><br> 
+                        <input type="text" id="person3Name" name="person3Name"><br><br> </div> 
+                        
+                <input type="submit" value="Cast Vote">
+                
+            </form>
+
+</body>
+</html>

@@ -1,1 +1,98 @@
 /* CSS FILE */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url('../static/images/background.png') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+}
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: rgba(0, 51, 160, 0.8); /* Navy Blue with transparency */
+    padding: 1em;
+}
+.navbar a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5em;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+.navbar a:hover {
+    background-color: rgba(255, 0, 0, 0.8); /* Red with transparency */
+}
+.content {
+    padding: 2em;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.5); /* Black with transparency */
+    border-radius: 10px;
+    margin: 2em;
+}
+.dashboard {
+    margin-top: 2em;
+    padding: 1em;
+    background-color: rgba(255, 255, 255, 0.8); /* White with transparency */
+    border-radius: 10px;
+    color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.dashboard h2 {
+    margin: 0;
+    padding-bottom: 1em;
+}
+.chart-container {
+    position: relative;
+    width: 400px; /* Fixed width */
+    height: 400px; /* Fixed height */
+}
+
+.form-container { 
+    background-color: rgba(255, 255, 255, 0.8); /* White with transparency */
+    width: 30%;
+    margin-left: 32%;
+    border-radius: 10px; color: black; 
+    padding: 2em; 
+} 
+
+.form-container label, 
+.form-container input[type="text"], 
+
+.form-container input[type="submit"] { 
+    display: block; 
+    margin: 0.5em 0; 
+    width: 100%; 
+} 
+
+.form-container select { 
+    display: block; 
+    margin: 0.5em;
+    margin-bottom: 30px; 
+    width: 100%; 
+} 
+
+
+.form-container input[type="text"], 
+.form-container input[type="submit"] { 
+    padding: 0.5em; 
+    border-radius: 5px; 
+    border: 1px solid #ccc; 
+    box-sizing: border-box; 
+} 
+
+.form-container input[type="submit"] { 
+    background-color: rgba(0, 51, 160, 0.8); /* Navy Blue with transparency */ 
+    color: white; 
+    border: none; 
+    transition: background-color 0.3s; 
+} 
+
+.form-container input[type="submit"]:hover { 
+    background-color: rgba(255, 0, 0, 0.8); /* Red with transparency */
+}
