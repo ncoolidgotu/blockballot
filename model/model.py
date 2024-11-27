@@ -10,17 +10,76 @@ from sqlalchemy import create_engine, Column, Integer, Sequence, MetaData, Table
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
+import time
+
+
+'''
+Block{
+    "Block ID / Index": ,
+    "Previous Block Hash":  ,
+    "Timestamp":  ,
+    "Nonce":    ,
+
+    "Hash_of_voter":    , #name + voter id hashed
+    "State":    ,
+    "Vote":     ,
+}
+'''
 
 class Blockchain:
     def __init__(self):
         # single block for single vote - due to proof of concept
+        self.block_db = Database()
         self.vote = []
         self.chain = []
         self.nodes = set()
         self.node_id = str(uuid4()).replace('-', '')
-        # manually set for easier implementation
-        self.genesis_block = []
+        self.difficulty_level = 3 # this means "000"
 
+        if self.block_db.is_table_empty():
+            self.genesis_block = {
+                "index":0,
+                "previous_hash":"0"*128,
+                "timestamp":0,
+                "nonce":0,
+                "hash_of_voter":"0"*128,
+                "state":"genesis",
+                "vote":"genesis",
+            }
+            self.add_block(self.genesis_block)
+
+    def Block_Hash_512(self,block):
+        '''
+        block = dictionary of a block
+        create a hash function using sha 512, encoding the block using json.dump
+        '''
+        TempBlock = block.copy() #We need to remove the timestamp before hashing, but do not want to touch the original block, so we copy it first
+        TempBlock.pop('timestamp', None) # Remove the timestamp for consistent hashing
+        blockEncoder = json.dumps(TempBlock,sort_keys=True).encode() #we want to sort by keys
+        return hashlib.sha512(blockEncoder).hexdigest() #hexdigest converts into hexa, so it´s more manageable
+
+
+    def Proof_of_Work(self,block):
+        '''
+        block = a block in the blockchain with a nonce of 0
+        modifies nonce until correct hash, then returns said hash
+        '''
+        while True:
+            # loop continues until block is valid
+            current_hash = self.Block_Hash_512(block)
+            if current_hash[:self.difficulty_level] == "0"*self.difficulty_level:
+                block["timestamp"] = time.time()
+                return [block,current_hash]
+            else:
+                block["nonce"]+=1
+
+    def add_block(self,block):
+        '''
+        Adds a block to the blockchain, after calculating nonce
+        '''
+        final_block, final_hash = self.Proof_of_Work(block)
+        self.block_db.insert_block(final_block,final_hash)
+        
 class Database:
     def __init__(self):
         self.database_url = "sqlite:///ballot_ledger_database.db"
@@ -40,11 +99,9 @@ class Database:
     def get_session(self):
         return self.Session()
 
-    def insert_block(self, block_data):
+    def insert_block(self, block_data,block_hash):
         # Calculate SHA-512 hash of the block data
         block_json = str(block_data)
-        block_hash = hashlib.sha512(block_json.encode('utf-8')).hexdigest()
-        
         # Insert the block and its hash into the database
         session = self.get_session()
         insert_stmt = self.block_table.insert().values(block=block_data, hash=block_hash)
@@ -53,6 +110,12 @@ class Database:
     
     def drop_table(self):
         self.block_table.drop(self.engine)
+
+    def is_table_empty(self):
+        session = self.get_session()
+        count = session.query(self.block_table).count()
+        session.close()
+        return count == 0
 
 ########################################################################
 ############################## TEST CODE ###############################
@@ -77,3 +140,5 @@ for row in result:
     print(row['block_id'], row['block'], row['hash'])
 
 '''
+
+testing = Blockchain()
