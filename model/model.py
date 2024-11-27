@@ -46,8 +46,7 @@ class Blockchain:
                 "state":"genesis",
                 "vote":"genesis",
             }
-            genesis_block, hash_of_genesis_block = self.Proof_of_Work(self.genesis_block)
-            self.block_db.insert_block(genesis_block,hash_of_genesis_block)
+            self.add_block(self.genesis_block)
 
     def Block_Hash_512(self,block):
         '''
@@ -73,8 +72,14 @@ class Blockchain:
                 return [block,current_hash]
             else:
                 block["nonce"]+=1
-            
 
+    def add_block(self,block):
+        '''
+        Adds a block to the blockchain, after calculating nonce
+        '''
+        final_block, final_hash = self.Proof_of_Work(block)
+        self.block_db.insert_block(final_block,final_hash)
+        
 class Database:
     def __init__(self):
         self.database_url = "sqlite:///ballot_ledger_database.db"
