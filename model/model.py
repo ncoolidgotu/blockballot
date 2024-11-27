@@ -79,6 +79,44 @@ class Blockchain:
         '''
         final_block, final_hash = self.Proof_of_Work(block)
         self.block_db.insert_block(final_block,final_hash)
+    
+    def build_block(self, name, voter_id, state, vote):
+        '''
+        Retrieve block information from frontend
+        
+        '''
+    
+        index = self.block_db.get_count()
+        previous_hash = self.block_db.get_last_hash()
+        
+        # Ensure the data being hashed is in the correct format (bytes) 
+        hash_input = (name + voter_id + state).encode()
+        hash_of_voter = hashlib.sha512(hash_input).hexdigest()
+        
+        block = {
+            "index":index,
+            "previous_hash":previous_hash,
+            "timestamp":0,
+            "nonce":0,
+            "hash_of_voter":hash_of_voter,
+            "state":state,
+            "vote":vote
+        }
+        
+        return block
+    
+    
+    '''
+    self.genesis_block = {
+                "index":0,
+                "previous_hash":"0"*128,
+                "timestamp":0,
+                "nonce":0,
+                "hash_of_voter":"0"*128,
+                "state":"genesis",
+                "vote":"genesis",
+            }
+    '''
         
 class Database:
     def __init__(self):
@@ -100,22 +138,33 @@ class Database:
         return self.Session()
 
     def insert_block(self, block_data,block_hash):
-        # Calculate SHA-512 hash of the block data
-        block_json = str(block_data)
         # Insert the block and its hash into the database
         session = self.get_session()
         insert_stmt = self.block_table.insert().values(block=block_data, hash=block_hash)
         session.execute(insert_stmt)
         session.commit()
     
+    def get_last_hash(self):
+        session = self.get_session()
+        try:
+            # Query to get the hash with the highest block_id
+            result = session.query(self.block_table.c.hash).order_by(self.block_table.c.block_id.desc()).first()
+            return result[0] if result else None
+        finally:
+            session.close()
+    
     def drop_table(self):
         self.block_table.drop(self.engine)
 
     def is_table_empty(self):
+        count = self.get_count()
+        return count == 0
+    
+    def get_count(self):
         session = self.get_session()
         count = session.query(self.block_table).count()
         session.close()
-        return count == 0
+        return count
 
 ########################################################################
 ############################## TEST CODE ###############################
@@ -141,4 +190,10 @@ for row in result:
 
 '''
 
+'''
 testing = Blockchain()
+#block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
+block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AB", "Donald Trump")
+testing.add_block(block_to_add)
+
+'''
