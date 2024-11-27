@@ -89,9 +89,7 @@ class Blockchain:
         index = self.block_db.get_count()
         previous_hash = self.block_db.get_last_hash()
         
-        # Ensure the data being hashed is in the correct format (bytes) 
-        hash_input = (name + voter_id + state).encode()
-        hash_of_voter = hashlib.sha512(hash_input).hexdigest()
+        hash_of_voter = self.get_voter_hash(name, voter_id, state)
         
         block = {
             "index":index,
@@ -104,6 +102,25 @@ class Blockchain:
         }
         
         return block
+    
+    def get_voter_hash(self, name, voter_id, state):
+        
+        # Ensure the data being hashed is in the correct format (bytes) 
+        hash_input = (name + voter_id + state).encode()
+        hash_of_voter = hashlib.sha512(hash_input).hexdigest()
+        
+        return hash_of_voter
+    
+    def check_dupes(self, name, voter_id, state):
+        voter_hash = self.get_voter_hash()
+        
+        block_list = self.block_db.get_jsons()
+        
+        for i in block_list:
+            if i["hash_of_voter"] == voter_hash:
+                return True
+        
+        return False
     
     
     '''
@@ -166,6 +183,16 @@ class Database:
         session.close()
         return count
 
+    def get_jsons(self):
+        session = self.get_session()
+        try:
+            # Query to get the hash with the highest block_id
+            result = session.query(self.block_table.c.block)
+            return result
+        finally:
+            session.close()
+        
+        
 ########################################################################
 ############################## TEST CODE ###############################
 ########################################################################
