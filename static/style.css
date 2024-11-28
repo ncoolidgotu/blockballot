@@ -86,6 +86,20 @@ body {
     box-sizing: border-box; 
 } 
 
+.button {
+    padding: 0.5em; 
+    border-radius: 5px; 
+    border: 1px solid #ccc; 
+    box-sizing: border-box; 
+    background-color: rgba(0, 51, 160, 0.8); /* Navy Blue with transparency */ 
+    color: white; 
+    transition: background-color 0.3s; 
+}
+
+.button:hover {
+    background-color: rgba(255, 0, 0, 0.8); /* Red with transparency */
+}
+
 .form-container input[type="submit"] { 
     background-color: rgba(0, 51, 160, 0.8); /* Navy Blue with transparency */ 
     color: white; 
