@@ -85,9 +85,21 @@ class Blockchain:
         private_key, public_key = self.create_key_pair()
         voter_signature = self.sign_block(final_hash,private_key)
 
-        if self.check_signature(final_hash,voter_signature,public_key):
-            self.block_db.insert_block(final_block,final_hash,voter_signature)
-            return public_key
+        valid_vote = True
+        valid_hash_check = final_block["hash_of_voter"]
+        block_list = self.block_db.get_jsons()
+        for i in block_list:
+            if i[0]["hash_of_voter"] == valid_hash_check:
+                valid_vote = False
+                print("duplicate voter hash!")
+                break
+
+        # if no duplicate voter hash on the db (can vote just fine)
+        if valid_vote:
+            # if the signature can be verified
+            if self.check_signature(final_hash,voter_signature,public_key):
+                self.block_db.insert_block(final_block,final_hash,voter_signature)
+                return public_key
     
     def build_block(self, name, voter_id, state, vote):
         '''
@@ -288,8 +300,9 @@ testing = Blockchain()
 
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
 #block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AZ", "Donald Trump")
+block_to_add = testing.build_block("Freddy Fazbear","5nightshahaha","TX","Donald Trump")
 #print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
-#testing.add_block(block_to_add)
+testing.add_block(block_to_add)
 
 #("Freddy Fazbear","5nightshahaha","TX")
 
