@@ -1,5 +1,6 @@
 from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA #remember to use sha512
+from Crypto.Hash import SHA
+from Crypto.PublicKey import RSA
 from uuid import uuid4
 import json
 import hashlib
@@ -12,6 +13,8 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
 import time
 import os
+from Crypto.Hash import SHA512
+import binascii
 
 '''
 Block{
@@ -76,9 +79,15 @@ class Blockchain:
     def add_block(self,block):
         '''
         Adds a block to the blockchain, after calculating nonce
+        It also signs the block and returns the public key, to hand to the user
         '''
         final_block, final_hash = self.Proof_of_Work(block)
-        self.block_db.insert_block(final_block,final_hash)
+        private_key, public_key = self.create_key_pair()
+        voter_signature = self.sign_block(final_hash,private_key)
+
+        if self.check_signature(final_hash,voter_signature,public_key):
+            self.block_db.insert_block(final_block,final_hash,voter_signature)
+            return public_key
     
     def build_block(self, name, voter_id, state, vote):
         '''
@@ -150,6 +159,27 @@ class Blockchain:
                 "vote":"genesis",
             }
     '''
+
+    def create_key_pair(self):
+        key = RSA.generate(2048)
+        private_key = key.export_key()
+        public_key = key.publickey().export_key()
+        return private_key, public_key
+
+    def sign_block(self,block_hash,private_key):
+        block_hash = SHA512.new(binascii.unhexlify(block_hash))
+        private_key = RSA.import_key(private_key)
+        signature = PKCS1_v1_5.new(private_key).sign(block_hash)
+        return signature
+    
+    def check_signature(self,block_hash,signature,public_key):
+        block_hash = SHA512.new(binascii.unhexlify(block_hash))
+        public_key = RSA.import_key(public_key)     
+        try:
+            PKCS1_v1_5.new(public_key).verify(block_hash, signature)
+            return True
+        except (ValueError, TypeError):
+            return False
         
 class Database:
     def __init__(self):
@@ -165,16 +195,17 @@ class Database:
             'ballots_blockchain', self.metadata,
             Column('block_id', Integer, Sequence('block_id_seq'), primary_key=True),
             Column('block', JSON),
-            Column('hash', String))
+            Column('hash', String),
+            Column('voter_signature',String))
         self.metadata.create_all(self.engine)
 
     def get_session(self):
         return self.Session()
 
-    def insert_block(self, block_data,block_hash):
+    def insert_block(self, block_data,block_hash,block_signature):
         # Insert the block and its hash into the database
         session = self.get_session()
-        insert_stmt = self.block_table.insert().values(block=block_data, hash=block_hash)
+        insert_stmt = self.block_table.insert().values(block=block_data, hash=block_hash,voter_signature=block_signature)
         session.execute(insert_stmt)
         session.commit()
     
@@ -253,6 +284,7 @@ for row in result:
 
 
 testing = Blockchain()
+#print (testing.create_key_pair())
 
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
 #block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AZ", "Donald Trump")
@@ -267,4 +299,4 @@ testing = Blockchain()
 #for i in testing.block_db.get_all():
 #    print (i)
 
-print(testing.retrieve_all())
+#print(testing.retrieve_all())
