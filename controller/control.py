@@ -91,5 +91,12 @@ def confirmation_vote():
     
     return render_template('confirmation.html', message=message)
 
+
+# "Check Vote Status" on NavBar
+@app.route('/view-ledger', methods=['GET'])
+def view_ledger():
+    records = BLOCKCHAIN.retrieve_all()
+    return render_template('view-ledger.html', records=records)
+
 if __name__ == '__main__':
     app.run(debug=True)

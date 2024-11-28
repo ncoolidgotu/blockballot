@@ -121,6 +121,15 @@ class Blockchain:
         
         return False, {}
     
+    def retrieve_all(self):
+        db_dump = self.block_db.get_jsons()
+        
+        ledger = []
+        for block in db_dump:
+            ledger.append(block[0])
+        
+        return ledger
+    
     
     '''
     self.genesis_block = {
@@ -191,6 +200,8 @@ class Database:
             return result
         finally:
             session.close()
+    
+    
         
         
 ########################################################################
@@ -218,10 +229,12 @@ for row in result:
 '''
 
 
-#testing = Blockchain()
+testing = Blockchain()
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
 #block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AB", "Donald Trump")
 #print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
 #testing.add_block(block_to_add)
 
 #("Freddy Fazbear","5nightshahaha","TX")
+
+#print(testing.retrieve_all())
