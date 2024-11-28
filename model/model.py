@@ -112,12 +112,12 @@ class Blockchain:
         return hash_of_voter
     
     def check_dupes(self, name, voter_id, state):
-        voter_hash = self.get_voter_hash()
+        voter_hash = self.get_voter_hash(name, voter_id, state)
         
         block_list = self.block_db.get_jsons()
         
-        for i in block_list:
-            if i["hash_of_voter"] == voter_hash:
+        for block in block_list:
+            if block[0]["hash_of_voter"] == voter_hash:
                 return True
         
         return False
@@ -217,10 +217,10 @@ for row in result:
 
 '''
 
-'''
+
 testing = Blockchain()
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
-block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AB", "Donald Trump")
-testing.add_block(block_to_add)
+#block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AB", "Donald Trump")
+print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
+#testing.add_block(block_to_add)
 
-'''
