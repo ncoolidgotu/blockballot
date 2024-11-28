@@ -15,6 +15,7 @@
                 <th>Hash of Voter</th>
                 <th>State</th>
                 <th>Vote</th>
+                <th>Block Hash</th>
             </tr>
         </thead>
         <tbody>
@@ -32,6 +33,9 @@
                 </td>
                 <td>{{ record.state }}</td>
                 <td>{{ record.vote }}</td>
+                <td>
+                    <button class="toggle-btn" onclick="showPopup('own-hash', '{{ record.own_hash }}')">Show Hash</button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

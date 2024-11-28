@@ -48,7 +48,7 @@ def status_page():
     elif status == "ELIGIBLE":
         message = f"Voter status for {full_name}: Eligible to vote"
     else:
-        message = "No record found. Please check your details and try again."
+        message = "Your information couldn't be verified. Please check your details and try again. \n Alternatively try contacting your local government"
     
     return render_template('status.html', message=message, status=status, fullName=full_name, id=voter_id, state=state, vote=result.get('vote', ''))
 
@@ -83,8 +83,11 @@ def confirmation_vote():
     try:
         # The block is mined and added to the blockchain
         block_to_add = BLOCKCHAIN.build_block(full_name,voter_id,state,vote)
-        BLOCKCHAIN.add_block(block_to_add)
-        message = 'Vote successfully cast!'
+        if block_to_add != {}:
+            BLOCKCHAIN.add_block(block_to_add)
+            message = 'Vote successfully cast!'
+        else:
+            'There was an error casting your vote! The blockchain may have been compromised!'
 
     except:
         message = 'There was an error casting your vote! Please try again later or contact our support team'

@@ -82,25 +82,32 @@ class Blockchain:
     
     def build_block(self, name, voter_id, state, vote):
         '''
-        Retrieve block information from frontend
-        
+        Retrieve block information from frontend to then create a new block
         '''
-    
+        # calculate its own index
         index = self.block_db.get_count()
+        # Here we get both the hash from the previous block in the database
+        # but also we calculate the hash again to compare it - ensure no modifications
         previous_hash = self.block_db.get_last_hash()
+        compare_previous_hash = self.block_db.get_last_block()
+        compare_previous_hash = self.Block_Hash_512(compare_previous_hash)
+
+        if previous_hash == compare_previous_hash:
+            hash_of_voter = self.get_voter_hash(name, voter_id, state)
+            block = {
+                "index":index,
+                "previous_hash":previous_hash,
+                "timestamp":0,
+                "nonce":0,
+                "hash_of_voter":hash_of_voter,
+                "state":state,
+                "vote":vote
+            }
         
-        hash_of_voter = self.get_voter_hash(name, voter_id, state)
-        
-        block = {
-            "index":index,
-            "previous_hash":previous_hash,
-            "timestamp":0,
-            "nonce":0,
-            "hash_of_voter":hash_of_voter,
-            "state":state,
-            "vote":vote
-        }
-        
+        else:
+            block = {}
+            print("ERROR - BLOCKCHAIN COMPROMISED")
+
         return block
     
     def get_voter_hash(self, name, voter_id, state):
@@ -122,11 +129,12 @@ class Blockchain:
         return False, {}
     
     def retrieve_all(self):
-        db_dump = self.block_db.get_jsons()
-        
+        db_dump = self.block_db.get_all()
         ledger = []
         for block in db_dump:
-            ledger.append(block[0])
+            to_add = block[0]
+            to_add["own_hash"] = block[1]
+            ledger.append(to_add)
         
         return ledger
     
@@ -173,7 +181,7 @@ class Database:
     def get_last_hash(self):
         session = self.get_session()
         try:
-            # Query to get the hash with the highest block_id
+            # Query to get the hash with the highest block_id from the blockchain hash information
             result = session.query(self.block_table.c.hash).order_by(self.block_table.c.block_id.desc()).first()
             return result[0] if result else None
         finally:
@@ -200,8 +208,23 @@ class Database:
             return result
         finally:
             session.close()
+
+    def get_all(self):
+        session = self.get_session()
+        try:
+            result = session.query(self.block_table.c.block, self.block_table.c.hash)
+            return result
+        finally:
+            session.close()
     
-    
+    def get_last_block(self):
+        session = self.get_session()
+        try:
+            # Query to get the hash with the highest block_id
+            result = session.query(self.block_table.c.block).order_by(self.block_table.c.block_id.desc()).first()
+            return result[0]
+        finally:
+            session.close()
         
         
 ########################################################################
@@ -230,11 +253,18 @@ for row in result:
 
 
 testing = Blockchain()
+
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
-#block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AB", "Donald Trump")
+#block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AZ", "Donald Trump")
 #print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
 #testing.add_block(block_to_add)
 
 #("Freddy Fazbear","5nightshahaha","TX")
 
 #print(testing.retrieve_all())
+#print(testing.block_db.get_last_block())
+
+#for i in testing.block_db.get_all():
+#    print (i)
+
+print(testing.retrieve_all())
