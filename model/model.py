@@ -1,5 +1,6 @@
 from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA #remember to use sha512
+from Crypto.Hash import SHA
+from Crypto.PublicKey import RSA
 from uuid import uuid4
 import json
 import hashlib
@@ -12,6 +13,8 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
 import time
 import os
+from Crypto.Hash import SHA512
+import binascii
 
 '''
 Block{
@@ -76,31 +79,56 @@ class Blockchain:
     def add_block(self,block):
         '''
         Adds a block to the blockchain, after calculating nonce
+        It also signs the block and returns the public key, to hand to the user
         '''
         final_block, final_hash = self.Proof_of_Work(block)
-        self.block_db.insert_block(final_block,final_hash)
+        private_key, public_key = self.create_key_pair()
+        voter_signature = self.sign_block(final_hash,private_key)
+
+        valid_vote = True
+        valid_hash_check = final_block["hash_of_voter"]
+        block_list = self.block_db.get_jsons()
+        for i in block_list:
+            if i[0]["hash_of_voter"] == valid_hash_check:
+                valid_vote = False
+                print("duplicate voter hash!")
+                break
+
+        # if no duplicate voter hash on the db (can vote just fine)
+        if valid_vote:
+            # if the signature can be verified
+            if self.check_signature(final_hash,voter_signature,public_key):
+                self.block_db.insert_block(final_block,final_hash,voter_signature)
+                return public_key
     
     def build_block(self, name, voter_id, state, vote):
         '''
-        Retrieve block information from frontend
-        
+        Retrieve block information from frontend to then create a new block
         '''
-    
+        # calculate its own index
         index = self.block_db.get_count()
+        # Here we get both the hash from the previous block in the database
+        # but also we calculate the hash again to compare it - ensure no modifications
         previous_hash = self.block_db.get_last_hash()
+        compare_previous_hash = self.block_db.get_last_block()
+        compare_previous_hash = self.Block_Hash_512(compare_previous_hash)
+
+        if previous_hash == compare_previous_hash:
+            hash_of_voter = self.get_voter_hash(name, voter_id, state)
+            block = {
+                "index":index,
+                "previous_hash":previous_hash,
+                "timestamp":0,
+                "nonce":0,
+                "hash_of_voter":hash_of_voter,
+                "state":state,
+                "vote":vote
+            }
         
-        hash_of_voter = self.get_voter_hash(name, voter_id, state)
-        
-        block = {
-            "index":index,
-            "previous_hash":previous_hash,
-            "timestamp":0,
-            "nonce":0,
-            "hash_of_voter":hash_of_voter,
-            "state":state,
-            "vote":vote
-        }
-        
+        else:
+            block = {}
+            print("ERROR - BLOCKCHAIN COMPROMISED")
+
         return block
     
     def get_voter_hash(self, name, voter_id, state):
@@ -122,11 +150,13 @@ class Blockchain:
         return False, {}
     
     def retrieve_all(self):
-        db_dump = self.block_db.get_jsons()
-        
+        db_dump = self.block_db.get_all()
         ledger = []
         for block in db_dump:
-            ledger.append(block[0])
+            to_add = block[0]
+            to_add["own_hash"] = block[1]
+            to_add["signature"] = block[2]
+            ledger.append(to_add)
         
         return ledger
     
@@ -142,6 +172,27 @@ class Blockchain:
                 "vote":"genesis",
             }
     '''
+
+    def create_key_pair(self):
+        key = RSA.generate(2048)
+        private_key = key.export_key()
+        public_key = key.publickey().export_key()
+        return private_key, public_key
+
+    def sign_block(self,block_hash,private_key):
+        block_hash = SHA512.new(binascii.unhexlify(block_hash))
+        private_key = RSA.import_key(private_key)
+        signature = PKCS1_v1_5.new(private_key).sign(block_hash)
+        return signature
+    
+    def check_signature(self,block_hash,signature,public_key):
+        block_hash = SHA512.new(binascii.unhexlify(block_hash))
+        public_key = RSA.import_key(public_key)     
+        try:
+            PKCS1_v1_5.new(public_key).verify(block_hash, signature)
+            return True
+        except (ValueError, TypeError):
+            return False
         
 class Database:
     def __init__(self):
@@ -157,23 +208,24 @@ class Database:
             'ballots_blockchain', self.metadata,
             Column('block_id', Integer, Sequence('block_id_seq'), primary_key=True),
             Column('block', JSON),
-            Column('hash', String))
+            Column('hash', String),
+            Column('voter_signature',String))
         self.metadata.create_all(self.engine)
 
     def get_session(self):
         return self.Session()
 
-    def insert_block(self, block_data,block_hash):
+    def insert_block(self, block_data,block_hash,block_signature):
         # Insert the block and its hash into the database
         session = self.get_session()
-        insert_stmt = self.block_table.insert().values(block=block_data, hash=block_hash)
+        insert_stmt = self.block_table.insert().values(block=block_data, hash=block_hash,voter_signature=block_signature)
         session.execute(insert_stmt)
         session.commit()
     
     def get_last_hash(self):
         session = self.get_session()
         try:
-            # Query to get the hash with the highest block_id
+            # Query to get the hash with the highest block_id from the blockchain hash information
             result = session.query(self.block_table.c.hash).order_by(self.block_table.c.block_id.desc()).first()
             return result[0] if result else None
         finally:
@@ -200,8 +252,23 @@ class Database:
             return result
         finally:
             session.close()
+
+    def get_all(self):
+        session = self.get_session()
+        try:
+            result = session.query(self.block_table.c.block, self.block_table.c.hash, self.block_table.c.voter_signature)
+            return result
+        finally:
+            session.close()
     
-    
+    def get_last_block(self):
+        session = self.get_session()
+        try:
+            # Query to get the hash with the highest block_id
+            result = session.query(self.block_table.c.block).order_by(self.block_table.c.block_id.desc()).first()
+            return result[0]
+        finally:
+            session.close()
         
         
 ########################################################################
@@ -230,11 +297,20 @@ for row in result:
 
 
 testing = Blockchain()
+#print (testing.create_key_pair())
+
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
-#block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AB", "Donald Trump")
+#block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AZ", "Donald Trump")
+block_to_add = testing.build_block("Freddy Fazbear","5nightshahaha","TX","Donald Trump")
 #print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
-#testing.add_block(block_to_add)
+testing.add_block(block_to_add)
 
 #("Freddy Fazbear","5nightshahaha","TX")
+
+#print(testing.retrieve_all())
+#print(testing.block_db.get_last_block())
+
+#for i in testing.block_db.get_all():
+#    print (i)
 
 #print(testing.retrieve_all())

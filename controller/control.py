@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
+import io
 from model import model
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
@@ -48,7 +49,7 @@ def status_page():
     elif status == "ELIGIBLE":
         message = f"Voter status for {full_name}: Eligible to vote"
     else:
-        message = "No record found. Please check your details and try again."
+        message = "Your information couldn't be verified. Please check your details and try again. \n Alternatively try contacting your local government"
     
     return render_template('status.html', message=message, status=status, fullName=full_name, id=voter_id, state=state, vote=result.get('vote', ''))
 
@@ -83,14 +84,17 @@ def confirmation_vote():
     try:
         # The block is mined and added to the blockchain
         block_to_add = BLOCKCHAIN.build_block(full_name,voter_id,state,vote)
-        BLOCKCHAIN.add_block(block_to_add)
-        message = 'Vote successfully cast!'
+        if block_to_add != {}:
+            public_key = BLOCKCHAIN.add_block(block_to_add)
+            print(public_key)
+            message = 'Vote successfully cast!\nYou can verify your vote using the following PUBLIC KEY:\nENSURE YOU SAVE IT AS YOU WILL NOT SEE IT AGAIN!!!'
+        else:
+            'There was an error casting your vote! The blockchain may have been compromised!'
 
     except:
         message = 'There was an error casting your vote! Please try again later or contact our support team'
     
-    return render_template('confirmation.html', message=message)
-
+    return render_template('confirmation.html', message=message,public_key=public_key)
 
 # "Check Vote Status" on NavBar
 @app.route('/view-ledger', methods=['GET'])

@@ -76,5 +76,26 @@
             </form>
         </div>
     </div>
+
+    <div id="popup" class="popup">
+        <p>Verifying information...</p>
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        document.getElementById('checkStatusForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting immediately
+
+            // Show the popup
+            document.getElementById('popup').style.display = 'block';
+
+            // Wait for 10 seconds before submitting the form
+            setTimeout(function() {
+                document.getElementById('checkStatusForm').submit();
+            }, 5000);
+        });
+    </script>
+
+
 </body>
 </html>
