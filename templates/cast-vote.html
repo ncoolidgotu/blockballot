@@ -1,28 +1,56 @@
-{% include "header.html" %}
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Your Vote</title>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
 <body>
+    {% include "header.html" %}
     {% include "navbar.html" %}
-    <div class="content"> 
-        <h1>Cast Vote</h1> 
-        <div class="form-container"> 
-            <form method="POST" action="/cast-vote"> 
-                <label>Cast Vote:</label><br> 
+    <div class="content">
+        <h1>Cast Your Vote</h1>
+        <form method="POST" action="/confirmation-vote">
+            <input type="hidden" id="fullName" name="fullName" value="{{ fullName }}">
+            <input type="hidden" id="id" name="id" value="{{ id }}">
+            <input type="hidden" id="state" name="state" value="{{ state }}">
+            <input type="hidden" id="vote" name="vote" value="{{ vote }}">
 
-                <input type="radio" id="republican" name="person" value="Donald Trump" onclick="showPerson3NameField()"> 
-                <label for="person1">Donald Trump - Republican</label><br> 
+            <label>Cast Vote:</label><br>
 
-                <input type="radio" id="democratic" name="person" value="Kamala Harris" onclick="showPerson3NameField()"> 
-                <label for="person2">Kamala Harris - Democratic</label><br> 
+            <input type="radio" id="trump" name="person" value="Donald Trump">
+            <label for="trump">Donald Trump - Republican</label><br>
 
-                <input type="radio" id="independent" name="person" value="person3" onclick="showPerson3NameField()"> 
-                <label for="independent">Independent</label><br><br> 
-                    <div id="person3NameField" class="hidden"> 
-                        <label for="person3Name">Enter name:</label><br> 
-                        <input type="text" id="person3Name" name="person3Name"><br><br> </div> 
-                        
-                <input type="submit" value="Cast Vote">
-                
-            </form>
+            <input type="radio" id="harris" name="person" value="Kamala Harris">
+            <label for="harris">Kamala Harris - Democratic</label><br>
 
+            <input type="radio" id="independent" name="person" value="Independent" onclick="showIndNameField()">
+            <label for="independent">Independent</label><br><br>
+            <div id="IndNameField" class="hidden">
+                <label for="IndName">Enter name:</label><br>
+                <input type="text" id="IndName" name="IndName"><br><br>
+            </div>
+
+            <input type="submit" value="Cast Vote">
+        </form>
+    </div>
+
+    <script>
+        function showIndNameField() {
+            var indNameField = document.getElementById("IndNameField");
+            indNameField.classList.remove("hidden");
+        }
+
+        document.getElementById("trump").addEventListener("change", function() {
+            document.getElementById("IndNameField").classList.add("hidden");
+        });
+        document.getElementById("harris").addEventListener("change", function() {
+            document.getElementById("IndNameField").classList.add("hidden");
+        });
+        document.getElementById("independent").addEventListener("change", showIndNameField);
+    </script>
 </body>
 </html>

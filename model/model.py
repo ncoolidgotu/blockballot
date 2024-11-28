@@ -112,14 +112,11 @@ class Blockchain:
         return hash_of_voter
     
     def retrieve_record(self, name, voter_id, state):
-        voter_hash = self.get_voter_hash(name, voter_id, state)
-        print(voter_hash)
-        
+        voter_hash = self.get_voter_hash(name, voter_id, state)        
         block_list = self.block_db.get_jsons()
         
         for block in block_list:
             if block[0]["hash_of_voter"] == voter_hash:
-                print(block[0])
                 return True, block[0]
         
         return False, {}
@@ -227,3 +224,4 @@ for row in result:
 #print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
 #testing.add_block(block_to_add)
 
+#("Freddy Fazbear","5nightshahaha","TX")
