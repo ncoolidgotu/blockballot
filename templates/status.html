@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voter Status</title>
+</head>
+<body>
+    {% include "header.html" %}
+    {% include "navbar.html" %}
+    <div class="content">
+        <h1>Voter Status</h1>
+        <p>{{ message }}</p>
+        {% if status == "ELIGIBLE" %}
+        <form method="POST" action="/cast-vote">
+            <input type="hidden" id="fullName" name="fullName" value="{{ fullName }}">
+            <input type="hidden" id="id" name="id" value="{{ id }}">
+            <input type="hidden" id="state" name="state" value="{{ state }}">
+            <input type="hidden" id="vote" name="vote" value="{{ vote }}">
+            <button type="submit" class="button">VOTE NOW!</button>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>
