@@ -155,6 +155,7 @@ class Blockchain:
         for block in db_dump:
             to_add = block[0]
             to_add["own_hash"] = block[1]
+            to_add["signature"] = block[2]
             ledger.append(to_add)
         
         return ledger
@@ -255,7 +256,7 @@ class Database:
     def get_all(self):
         session = self.get_session()
         try:
-            result = session.query(self.block_table.c.block, self.block_table.c.hash)
+            result = session.query(self.block_table.c.block, self.block_table.c.hash, self.block_table.c.voter_signature)
             return result
         finally:
             session.close()
