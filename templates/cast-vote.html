@@ -13,7 +13,7 @@
     {% include "navbar.html" %}
     <div class="content">
         <h1>Cast Your Vote</h1>
-        <form method="POST" action="/secret-vote">
+        <form method="POST" action="/confirmation-vote">
             <input type="hidden" id="fullName" name="fullName" value="{{ fullName }}">
             <input type="hidden" id="id" name="id" value="{{ id }}">
             <input type="hidden" id="state" name="state" value="{{ state }}">
