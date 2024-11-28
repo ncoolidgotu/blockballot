@@ -11,7 +11,7 @@ from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
 import time
-
+import os
 
 '''
 Block{
@@ -111,16 +111,18 @@ class Blockchain:
         
         return hash_of_voter
     
-    def check_dupes(self, name, voter_id, state):
+    def retrieve_record(self, name, voter_id, state):
         voter_hash = self.get_voter_hash(name, voter_id, state)
+        print(voter_hash)
         
         block_list = self.block_db.get_jsons()
         
         for block in block_list:
             if block[0]["hash_of_voter"] == voter_hash:
-                return True
+                print(block[0])
+                return True, block[0]
         
-        return False
+        return False, {}
     
     
     '''
@@ -137,7 +139,8 @@ class Blockchain:
         
 class Database:
     def __init__(self):
-        self.database_url = "sqlite:///ballot_ledger_database.db"
+        self.database_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../model/ballot_ledger_database.db"))
+        self.database_url = f"sqlite:///{self.database_path}"
         self.engine = create_engine(self.database_url)
         self.metadata = MetaData()
         self.Session = sessionmaker(bind=self.engine)
@@ -218,9 +221,9 @@ for row in result:
 '''
 
 
-testing = Blockchain()
+#testing = Blockchain()
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
 #block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AB", "Donald Trump")
-print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
+#print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
 #testing.add_block(block_to_add)
 

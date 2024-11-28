@@ -1,11 +1,19 @@
 from flask import Flask, render_template, request
+from model import model
 
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
+BLOCKCHAIN = model.Blockchain()
 
-def query_database(full_name, id, state):
-    # Placeholder for database query logic
-    return {"full_name": full_name, "id": id, "state": state, "vote": ""}  # Update as necessary
+def check_registration_status(full_name, id, state):
+    check_for_dupe = BLOCKCHAIN.retrieve_record(full_name, id, state)
+    print(check_for_dupe)
+    if check_for_dupe[0] == True:
+        status = "VOTED"
+        return status, check_for_dupe[1]
+    elif check_for_dupe[0] == False:
+        status = "ELIGIBLE"
+        return status, check_for_dupe[1]
 
 @app.route('/')
 def index():
@@ -23,18 +31,17 @@ def manage_vote():
         
         # Check against the database
         # For the dummy code, simulate database result
-        result = query_database(full_name, id, state)
+        status, result = check_registration_status(full_name, id, state)
+        print(status)
         
-        if result and result.get("vote"):
+        if status ==  "VOTED":
             message = f"Voter status for {full_name}: Vote has been cast for {result['vote']}"
-            status = "VOTED"
-        elif result:
+        elif status == "ELIGIBLE":
             message = f"Voter status for {full_name}: Eligible to vote"
-            status = "ELIGIBLE"
         else:
             message = "No record found. Please check your details and try again."
         
-        print(result, full_name)
+        print(full_name, id, state)
     
     return render_template('manage-vote.html', message=message, status=status)
 
