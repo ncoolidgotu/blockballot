@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
+import io
 from model import model
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
@@ -84,16 +85,16 @@ def confirmation_vote():
         # The block is mined and added to the blockchain
         block_to_add = BLOCKCHAIN.build_block(full_name,voter_id,state,vote)
         if block_to_add != {}:
-            BLOCKCHAIN.add_block(block_to_add)
-            message = 'Vote successfully cast!'
+            public_key = BLOCKCHAIN.add_block(block_to_add)
+            print(public_key)
+            message = 'Vote successfully cast!\nYou can verify your vote using the following PUBLIC KEY:\nENSURE YOU SAVE IT AS YOU WILL NOT SEE IT AGAIN!!!'
         else:
             'There was an error casting your vote! The blockchain may have been compromised!'
 
     except:
         message = 'There was an error casting your vote! Please try again later or contact our support team'
     
-    return render_template('confirmation.html', message=message)
-
+    return render_template('confirmation.html', message=message,public_key=public_key)
 
 # "Check Vote Status" on NavBar
 @app.route('/view-ledger', methods=['GET'])

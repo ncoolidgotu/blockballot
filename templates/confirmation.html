@@ -10,7 +10,23 @@
     {% include "navbar.html" %}
     <div class="content">
         <h1>Vote Confirmation</h1>
-        <p>{{ message }}</p>
+        <p>{{ message.replace('\n', '<br>')|safe }}</p>
+
+        {% if public_key %}
+            <button onclick="downloadKey()">Download Public Key</button>
+            <script>
+                function downloadKey() {
+                    const publicKey = "{{ public_key }}";
+                    const blob = new Blob([publicKey], { type: 'text/plain' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'public_key.txt';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            </script>
+        {% endif %}
     </div>
 </body>
 </html>
