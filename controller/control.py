@@ -9,11 +9,11 @@ BLOCKCHAIN = model.Blockchain()
 
 def check_registration_status(full_name, id, state):
     '''
-    Connects to back end, returns a tuple
+    Connects to back end that returns a tuple
     1st element: True if the user has already voted, False if they havent
     2nd element: dictionary with voter info - empty if they havent voted
 
-    returns a tuple
+    this function returns the following tuple
     1st element: str of "VOTED" or "ELIGIBLE"
     2nd element: a dictionary with voter info
     '''
@@ -26,35 +26,31 @@ def check_registration_status(full_name, id, state):
         return status, check_for_dupe[1]
 
 
-# 404 Error Handler (Page Not Found)
+# Different HTTP Error Handler Routes
 @app.errorhandler(404)
 def page_not_found(e):
-    # Return custom 404 page
     return render_template('404.html'), 404
 
-# 500 Error Handler (Internal Server Error)
 @app.errorhandler(500)
 def internal_error(e):
-    # Return custom 500 page
     return render_template('500.html'), 500
 
-# 405 Error Handler (Method Not Allowed)
 @app.errorhandler(405)
 def method_not_allowed(e):
-    # Return custom 405 page
     return render_template('405.html'), 405
 
-
+# Home page
 @app.route('/')
 def index():
     votes, vote_state_data = BLOCKCHAIN.tally_votes()
     return render_template('index.html', votes=votes, vote_state_data=vote_state_data)
 
-# "Check Vote Status" on NavBar
+# "VOTE!!" on NavBar - user puts information to get voting status
 @app.route('/manage-vote', methods=['GET'])
 def manage_vote():
     return render_template('manage-vote.html')
 
+# Returns vote eligibility. If the user has already voted, their casted vote is returned instead.
 @app.route('/status.html', methods=['POST'])
 def status_page():
     full_name = request.form['fullName']
@@ -75,6 +71,7 @@ def status_page():
     
     return render_template('status.html', message=message, status=status, fullName=full_name, id=voter_id, state=state, vote=result.get('vote', ''))
 
+# If in status the user was eligible to vote, they can vote from this redirected page
 @app.route('/cast-vote', methods=['GET', 'POST'])
 def cast_vote():
     message = ''
@@ -93,7 +90,7 @@ def cast_vote():
 
     return render_template('cast-vote.html', message=message, status=status, fullName=full_name, id=voter_id, state=state, vote=vote)
 
-
+# Having voted, this returns a confirmation message, as well as the hash and key to verify the vote later on
 @app.route('/confirmation-vote', methods=['POST'])
 def confirmation_vote():
     full_name = request.form['fullName']
@@ -126,13 +123,13 @@ def confirmation_vote():
     
     return render_template('confirmation.html', message=message,public_key=public_key, hash_of_voter=hash_of_voter, full_name=full_name)
 
-
+# To view the entire blockchain
 @app.route('/view-ledger', methods=['GET'])
 def view_ledger():
     data = BLOCKCHAIN.validate_blockchain()
     return render_template('view-ledger.html', data=data)
 
-
+# to verify one's own vote a hash and a public key
 @app.route('/verify-vote', methods=['GET', 'POST'])
 def verify_vote():
     if request.method == 'POST':
@@ -162,16 +159,15 @@ def verify_vote():
 
     return render_template('verify-vote.html')
 
+# Different routes to be returned for the different error handlers mentioned previously (top of code)
 @app.route('/404')
 def not_found_page():
     return render_template('404.html')
 
-# Custom 500 page template (500.html)
 @app.route('/500')
 def internal_error_page():
     return render_template('500.html')
 
-# Custom 405 page template (405.html)
 @app.route('/405')
 def method_not_allowed_page():
     return render_template('405.html')
