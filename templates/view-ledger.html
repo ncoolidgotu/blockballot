@@ -3,9 +3,8 @@
 <body>
     {% include "navbar.html" %}
     
-    <h1>Blockchain Vote Records</h1>
-
     <div class="table-container">
+        <h1>Blockchain Vote Records</h1>
         <table class="styled-table">
             <thead>
                 <tr>
@@ -28,7 +27,7 @@
                     <td>
                         <button class="toggle-btn" onclick="showPopup('previous-hash', '{{ record.previous_hash }}')">Show Hash</button>
                     </td>
-                    <td>{{ record.timestamp }}</td>
+                    <td>{{ record.timestamp | epoch_to_datetime }}</td>  <!-- Using custom filter to convert timestamp -->
                     <td>{{ record.nonce }}</td>
                     <td>
                         <button class="toggle-btn" onclick="showPopup('hash-of-voter', '{{ record.hash_of_voter }}')">Show Hash</button>

@@ -1,0 +1,13 @@
+<!-- templates/500.html -->
+{% include "header.html" %}
+
+<body>
+    {% include "navbar.html" %}
+    
+    <div class="container">
+        <h1>Oops! Something Went Wrong.</h1>
+        <p>We are experiencing technical difficulties. Please try again later.</p>
+        <p><a href="{{ url_for('index') }}">Go back to the homepage</a></p>
+    </div>
+</body>
+</html>

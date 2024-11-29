@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, send_file
 import io
 from model import model
 import html
+from datetime import datetime
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 BLOCKCHAIN = model.Blockchain()
@@ -24,10 +25,30 @@ def check_registration_status(full_name, id, state):
         status = "ELIGIBLE"
         return status, check_for_dupe[1]
 
+
+# 404 Error Handler (Page Not Found)
+@app.errorhandler(404)
+def page_not_found(e):
+    # Return custom 404 page
+    return render_template('404.html'), 404
+
+# 500 Error Handler (Internal Server Error)
+@app.errorhandler(500)
+def internal_error(e):
+    # Return custom 500 page
+    return render_template('500.html'), 500
+
+# 405 Error Handler (Method Not Allowed)
+@app.errorhandler(405)
+def method_not_allowed(e):
+    # Return custom 405 page
+    return render_template('405.html'), 405
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
-from flask import Flask, render_template, request
+    votes, vote_state_data = BLOCKCHAIN.tally_votes()
+    return render_template('index.html', votes=votes, vote_state_data=vote_state_data)
 
 # "Check Vote Status" on NavBar
 @app.route('/manage-vote', methods=['GET'])
@@ -140,6 +161,25 @@ def verify_vote():
             return "Error: Both files are required!", 400
 
     return render_template('verify-vote.html')
+
+@app.route('/404')
+def not_found_page():
+    return render_template('404.html')
+
+# Custom 500 page template (500.html)
+@app.route('/500')
+def internal_error_page():
+    return render_template('500.html')
+
+# Custom 405 page template (405.html)
+@app.route('/405')
+def method_not_allowed_page():
+    return render_template('405.html')
+
+# Custom filter to convert epoch timestamp to human-readable format
+@app.template_filter('epoch_to_datetime')
+def epoch_to_datetime(epoch):
+    return datetime.utcfromtimestamp(epoch).strftime('%Y-%m-%d %H:%M:%S')
 
 if __name__ == '__main__':
     app.run(debug=True)

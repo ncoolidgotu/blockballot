@@ -7,7 +7,7 @@ import hashlib
 import requests
 from urllib.parse import urlparse
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import create_engine, Column, Integer, Sequence, MetaData, Table, String
+from sqlalchemy import create_engine, Column, Integer, Sequence, MetaData, Table, String, update
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
@@ -51,6 +51,8 @@ class Blockchain:
                 "vote":"genesis",
             }
             self.add_block(self.genesis_block)
+        
+        self.update_hashes()
 
     def Block_Hash_512(self,block):
         '''
@@ -198,6 +200,7 @@ class Blockchain:
         return current_block["previous_hash"] == previous_block_hash
     
     def validate_blockchain(self):
+        self.update_hashes()
         records = self.retrieve_all()
         validations = []
         
@@ -226,20 +229,27 @@ class Blockchain:
         
         data = zip(records, validations)
         return data
-                
+
+    def update_hashes(self):
+        dump = self.block_db.get_jsons()
+        
+        n = 1
+        for i in dump:
+            updated_hash = self.Block_Hash_512(i[0])
+            self.block_db.update_hash_by_index(n,updated_hash)
+            n += 1
     
-    
-    '''
-    self.genesis_block = {
-                "index":0,
-                "previous_hash":"0"*128,
-                "timestamp":0,
-                "nonce":0,
-                "hash_of_voter":"0"*128,
-                "state":"genesis",
-                "vote":"genesis",
-            }
-    '''
+    def tally_votes(self):
+        blockchain = self.retrieve_all()
+        votes = []
+        vote_state_data = []
+        
+        for block in blockchain:
+            votes.append(block["vote"])
+            vote_state_data.append([block["vote"],block["state"]])
+
+        return votes, vote_state_data
+            
 
     def create_key_pair(self):
         key = RSA.generate(2048)
@@ -343,6 +353,21 @@ class Database:
             return result[0]
         finally:
             session.close()
+    
+    def update_hash_by_index(self, index_value, new_hash):
+        session = self.get_session()
+
+        # Update statement
+        stmt = (
+            update(self.block_table)
+            .where(self.block_table.c.block_id == index_value)
+            .values(hash=new_hash)
+        )
+
+        # Execute the update statement
+        session.execute(stmt)
+        session.commit()
+
         
         
 ########################################################################
