@@ -192,7 +192,41 @@ class Blockchain:
                 return block, "INCORRECT KEY"
         else:
             return block, "INCORRECT HASH"
-            
+    
+    def validate_block(self, current_block, previous_block):
+        previous_block_hash = self.Block_Hash_512(previous_block)
+        return current_block["previous_hash"] == previous_block_hash
+    
+    def validate_blockchain(self):
+        records = self.retrieve_all()
+        validations = []
+        
+        broken_flag = False
+        n = 0
+        for i in records:
+            if not broken_flag:
+                if n == 0:
+                    validations.append('VALID')
+                else:
+                    current_record = records[n].copy()
+                    previous_record = records[n-1].copy()
+                    current_record.pop('own_hash')
+                    current_record.pop('signature')
+                    previous_record.pop('own_hash')
+                    previous_record.pop('signature')
+                    if self.validate_block(current_record, previous_record):
+                        validations.append("VALID")
+                    else:
+                        broken_flag = True
+                        validations[-1] = "NOT VALID"
+                        validations.append("NOT VALID")
+            else:
+                validations.append("NOT VALID")
+            n+=1
+        
+        data = zip(records, validations)
+        return data
+                
     
     
     '''

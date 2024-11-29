@@ -91,7 +91,12 @@ def confirmation_vote():
             
             print("HERE:",public_key)
             
-            message = 'Vote successfully cast!\nYou can verify your vote using the following PUBLIC KEY and HASH:\nENSURE YOU SAVE IT AS YOU WILL NOT SEE IT AGAIN!!!'
+            message = (
+                'Vote successfully cast!\n'
+                'You can verify your vote using the following PUBLIC KEY and HASH:\n'
+                'ENSURE YOU SAVE IT AS YOU WILL NOT SEE IT AGAIN!!!'
+            )
+
         else:
             'There was an error casting your vote! The blockchain may have been compromised!'
 
@@ -100,11 +105,12 @@ def confirmation_vote():
     
     return render_template('confirmation.html', message=message,public_key=public_key, hash_of_voter=hash_of_voter, full_name=full_name)
 
-# "Check Vote Status" on NavBar
+
 @app.route('/view-ledger', methods=['GET'])
 def view_ledger():
-    records = BLOCKCHAIN.retrieve_all()
-    return render_template('view-ledger.html', records=records)
+    data = BLOCKCHAIN.validate_blockchain()
+    return render_template('view-ledger.html', data=data)
+
 
 @app.route('/verify-vote', methods=['GET', 'POST'])
 def verify_vote():
