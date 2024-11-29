@@ -41,7 +41,8 @@ class Blockchain:
         self.chain = []
         self.nodes = set()
         self.node_id = str(uuid4()).replace('-', '')
-        self.difficulty_level = 3 # this means "000"
+        # set difficulty to 000
+        self.difficulty_level = 3
 
         # If table has just been initialized, add the genesis block
         if self.block_db.is_table_empty():
@@ -63,10 +64,11 @@ class Blockchain:
         block = dictionary of a block
         create a hash function using sha 512, encoding the block using json.dump
         '''
-        TempBlock = block.copy() #We need to remove the timestamp before hashing, but do not want to touch the original block, so we copy it first
-        TempBlock.pop('timestamp', None) # Remove the timestamp for consistent hashing
-        blockEncoder = json.dumps(TempBlock,sort_keys=True).encode() #we want to sort by keys
-        return hashlib.sha512(blockEncoder).hexdigest() #hexdigest converts into hexa, so it´s more manageable
+        # Copy the block to hash it without timestamp
+        TempBlock = block.copy() 
+        TempBlock.pop('timestamp', None)
+        blockEncoder = json.dumps(TempBlock,sort_keys=True).encode()
+        return hashlib.sha512(blockEncoder).hexdigest() #hexdigest
 
     def Proof_of_Work(self,block):
         '''

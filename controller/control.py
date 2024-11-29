@@ -139,9 +139,10 @@ def verify_vote():
         
         if user_hash_file and public_key_file:
             # Read the contents of the files (assuming they're text files)
-            user_hash = user_hash_file.read().decode('utf-8')  # Decoding from bytes to string
+            user_hash = user_hash_file.read().decode('utf-8') 
+            
             pk_bytes = public_key_file.read()
-            public_key = html.unescape(pk_bytes.decode('utf-8')).strip()  # Decoding from bytes to string
+            public_key = html.unescape(pk_bytes.decode('utf-8')).strip()
             public_key = public_key[2:-1]
             
             print(public_key)
