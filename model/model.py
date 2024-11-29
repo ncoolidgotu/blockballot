@@ -100,7 +100,7 @@ class Blockchain:
             # if the signature can be verified
             if self.check_signature(final_hash,voter_signature,public_key):
                 self.block_db.insert_block(final_block,final_hash,voter_signature)
-                #print("HELLO", public_key)
+                print("HELLO", public_key)
                 return public_key
     
     def build_block(self, name, voter_id, state, vote):
@@ -183,8 +183,8 @@ class Blockchain:
         
         if block_exists:
             signature_valid = self.check_signature(block["own_hash"], block["signature"], public_key)
-            #print(block)
-            #print(signature_valid)
+            print(block)
+            print(signature_valid)
             
             if signature_valid:
                 return block, "SIGNATURE VERIFIED"
@@ -220,16 +220,19 @@ class Blockchain:
         signature = pkcs1_15.new(private_key).sign(block_hash)
         return signature
     
-    def check_signature(self, block_hash, signature, public_key):
-        binary_hash = binascii.unhexlify(block_hash)
-        h = SHA512.new(binary_hash)
+    def check_signature(self,block_hash,signature,public_key):
+        block_hash = SHA512.new(binascii.unhexlify(block_hash))
         public_key = RSA.import_key(public_key)
+        print(public_key)
+        print(block_hash)
+        print(signature)
+        
         try:
-            pkcs1_15.new(public_key).verify(h, signature)
+            pkcs1_15.new(public_key).verify(block_hash, signature)
             return True
-        except (ValueError, TypeError) as e:
-            print(f"An error occurred: {e}")
+        except (ValueError, TypeError):
             return False
+    
     
 class Database:
     def __init__(self):
@@ -333,14 +336,14 @@ for row in result:
 '''
 
 
-#testing = Blockchain()
+testing = Blockchain()
 #print (testing.create_key_pair())
 
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
 #block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AZ", "Donald Trump")
-#block_to_add = testing.build_block("Freddy Fazbear","5nightshahaha","TX","Donald Trump")
+block_to_add = testing.build_block("Freddy Fazbear","5nightshahaha","TX","Donald Trump")
 #print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
-#testing.add_block(block_to_add)
+testing.add_block(block_to_add)
 
 #("Freddy Fazbear","5nightshahaha","TX")
 
