@@ -17,6 +17,7 @@ from Crypto.Hash import SHA512
 import binascii
 import random
 
+# Block format in a blockchain for reference
 '''
 Block{
     "Block ID / Index": ,
@@ -30,16 +31,20 @@ Block{
 }
 '''
 
+# Blockchain defined on a class
+# in this proof of concept, 1 block = 1 vote
 class Blockchain:
     def __init__(self):
-        # single block for single vote - due to proof of concept
+        # initialize a database for the blockchain based on the database class defined below
         self.block_db = Database()
         self.vote = []
         self.chain = []
         self.nodes = set()
         self.node_id = str(uuid4()).replace('-', '')
-        self.difficulty_level = 3 # this means "000"
+        # set difficulty to 000
+        self.difficulty_level = 3
 
+        # If table has just been initialized, add the genesis block
         if self.block_db.is_table_empty():
             self.genesis_block = {
                 "index":0,
@@ -51,7 +56,7 @@ class Blockchain:
                 "vote":"genesis",
             }
             self.add_block(self.genesis_block)
-        
+        # Update all of the hashes on startup to check for t
         self.update_hashes()
 
     def Block_Hash_512(self,block):
@@ -59,11 +64,11 @@ class Blockchain:
         block = dictionary of a block
         create a hash function using sha 512, encoding the block using json.dump
         '''
-        TempBlock = block.copy() #We need to remove the timestamp before hashing, but do not want to touch the original block, so we copy it first
-        TempBlock.pop('timestamp', None) # Remove the timestamp for consistent hashing
-        blockEncoder = json.dumps(TempBlock,sort_keys=True).encode() #we want to sort by keys
-        return hashlib.sha512(blockEncoder).hexdigest() #hexdigest converts into hexa, so it´s more manageable
-
+        # Copy the block to hash it without timestamp
+        TempBlock = block.copy() 
+        TempBlock.pop('timestamp', None)
+        blockEncoder = json.dumps(TempBlock,sort_keys=True).encode()
+        return hashlib.sha512(blockEncoder).hexdigest() #hexdigest
 
     def Proof_of_Work(self,block):
         '''
@@ -153,7 +158,11 @@ class Blockchain:
         
         return False, {}
     
-    def retrieve_record_by_hash(self, hash_of_voter):      
+    def retrieve_record_by_hash(self, hash_of_voter):
+        '''
+        Retrieve an entire column of the database where hash of vote is the same
+        Return a JSON with all the data of the entry
+        '''      
         block_list = self.block_db.get_all()
         
         for block in block_list:
@@ -167,6 +176,9 @@ class Blockchain:
         return False, {}
     
     def retrieve_all(self):
+        '''
+        Returns a list of JSONS, that have al the infomation
+        '''
         db_dump = self.block_db.get_all()
         ledger = []
         for block in db_dump:
@@ -178,6 +190,9 @@ class Blockchain:
         return ledger
     
     def verify_vote(self, public_key, hash_of_voter):
+        '''
+        function verifies the signature of a block, given the public key
+        '''
         public_key = public_key
         hash_of_voter = hash_of_voter
         
@@ -196,10 +211,17 @@ class Blockchain:
             return block, "INCORRECT HASH"
     
     def validate_block(self, current_block, previous_block):
+        '''
+        small function that partkes in validating the blockchain my comparing previous hashes
+        '''
         previous_block_hash = self.Block_Hash_512(previous_block)
         return current_block["previous_hash"] == previous_block_hash
     
     def validate_blockchain(self):
+        '''
+        function validates the blockchain, and marks blocks as valid or not valid
+        not valid indicates the database has been tampered with
+        '''
         self.update_hashes()
         records = self.retrieve_all()
         validations = []
@@ -231,6 +253,9 @@ class Blockchain:
         return data
 
     def update_hashes(self):
+        '''recompute the hashes of blocks to update the sqlite column, and compare with
+        "previous_block_hash" for verification
+        '''
         dump = self.block_db.get_jsons()
         
         n = 1
@@ -240,6 +265,7 @@ class Blockchain:
             n += 1
     
     def tally_votes(self):
+        '''Count the total amount of votes per candidate'''
         blockchain = self.retrieve_all()
         votes = []
         vote_state_data = []
@@ -250,20 +276,20 @@ class Blockchain:
 
         return votes, vote_state_data
             
-
+# The next 3 functions are used for a digital signature implementation
+#Creating the key pair
     def create_key_pair(self):
         key = RSA.generate(2048)
         private_key = key.export_key()
         public_key = key.publickey().export_key()
         return private_key, public_key
-
-
+#Signing with the private key
     def sign_block(self,block_hash,private_key):
         block_hash = SHA512.new(binascii.unhexlify(block_hash))
         private_key = RSA.import_key(private_key)
         signature = pkcs1_15.new(private_key).sign(block_hash)
         return signature
-    
+#Demonstrating one's one block with a public key
     def check_signature(self,block_hash,signature,public_key):
         block_hash = SHA512.new(binascii.unhexlify(block_hash))
         public_key = RSA.import_key(public_key)
@@ -277,7 +303,7 @@ class Blockchain:
         except (ValueError, TypeError):
             return False
     
-    
+# All sqlite3 queries and such and the database class
 class Database:
     def __init__(self):
         self.database_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../model/ballot_ledger_database.db"))
@@ -394,15 +420,15 @@ for row in result:
 
 '''
 
+#testing = Blockchain()
 
-testing = Blockchain()
 #print (testing.create_key_pair())
 
 #block_to_add = testing.build_block("Rick Astley","635181u2631ut2", "CA", "Donald Trump")
 #block_to_add = testing.build_block("Joe Biden","839247823947938247j3", "AZ", "Donald Trump")
-block_to_add = testing.build_block("Freddy Fazbear","5nightshahaha","TX","Donald Trump")
+#block_to_add = testing.build_block("Freddy Fazbear","5nightshahaha","TX","Donald Trump")
 #print(testing.check_dupes("Rick Astley","635181u2631ut2", "CA"))
-testing.add_block(block_to_add)
+#testing.add_block(block_to_add)
 
 #("Freddy Fazbear","5nightshahaha","TX")
 
