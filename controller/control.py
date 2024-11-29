@@ -89,7 +89,7 @@ def confirmation_vote():
             public_key = BLOCKCHAIN.add_block(block_to_add)
             hash_of_voter = BLOCKCHAIN.get_voter_hash(full_name, voter_id, state)
             
-            print("HERE:",public_key)
+            #print("HERE:",public_key)
             
             message = 'Vote successfully cast!\nYou can verify your vote using the following PUBLIC KEY and HASH:\nENSURE YOU SAVE IT AS YOU WILL NOT SEE IT AGAIN!!!'
         else:
@@ -120,11 +120,11 @@ def verify_vote():
             public_key = html.unescape(pk_bytes.decode('utf-8')).strip()  # Decoding from bytes to string
             public_key = public_key[2:-1]
             
-            print(public_key)
+            #print(public_key)
             
             # For example, print the contents to the console
-            print("User Hash:", user_hash)
-            print("Public Key:", public_key)
+            #print("User Hash:", user_hash)
+            #print("Public Key:", public_key)
             
             block, message = BLOCKCHAIN.verify_vote(public_key, user_hash)
 
