@@ -20,7 +20,23 @@
                     const blob = new Blob([publicKey], { type: 'text/plain' });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
-                    link.download = 'public_key.txt';
+                    link.download = 'public_key_{{ full_name }}.txt';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            </script>
+        {% endif %}
+
+        {% if hash_of_voter %}
+            <button onclick="downloadHash()">Download Hash</button>
+            <script>
+                function downloadHash() {
+                    const voterHash = "{{ hash_of_voter }}";
+                    const blob = new Blob([voterHash], { type: 'text/plain' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'hash_of_{{ full_name }}.txt';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);

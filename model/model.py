@@ -1,4 +1,4 @@
-from Crypto.Signature import PKCS1_v1_5
+from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from uuid import uuid4
@@ -15,6 +15,7 @@ import time
 import os
 from Crypto.Hash import SHA512
 import binascii
+import random
 
 '''
 Block{
@@ -99,6 +100,7 @@ class Blockchain:
             # if the signature can be verified
             if self.check_signature(final_hash,voter_signature,public_key):
                 self.block_db.insert_block(final_block,final_hash,voter_signature)
+                print("HELLO", public_key)
                 return public_key
     
     def build_block(self, name, voter_id, state, vote):
@@ -149,6 +151,19 @@ class Blockchain:
         
         return False, {}
     
+    def retrieve_record_by_hash(self, hash_of_voter):      
+        block_list = self.block_db.get_all()
+        
+        for block in block_list:
+            if block[0]["hash_of_voter"] == hash_of_voter:
+                to_return = block[0]
+                to_return["own_hash"] = block[1]
+                to_return["signature"] = block[2]
+                
+                return True, to_return
+        
+        return False, {}
+    
     def retrieve_all(self):
         db_dump = self.block_db.get_all()
         ledger = []
@@ -159,6 +174,25 @@ class Blockchain:
             ledger.append(to_add)
         
         return ledger
+    
+    def verify_vote(self, public_key, hash_of_voter):
+        public_key = public_key
+        hash_of_voter = hash_of_voter
+        
+        block_exists, block = self.retrieve_record_by_hash(hash_of_voter)
+        
+        if block_exists:
+            signature_valid = self.check_signature(block["own_hash"], block["signature"], public_key)
+            print(block)
+            print(signature_valid)
+            
+            if signature_valid:
+                return block, "SIGNATURE VERIFIED"
+            else:
+                return block, "INCORRECT KEY"
+        else:
+            return block, "INCORRECT HASH"
+            
     
     
     '''
@@ -179,21 +213,27 @@ class Blockchain:
         public_key = key.publickey().export_key()
         return private_key, public_key
 
+
     def sign_block(self,block_hash,private_key):
         block_hash = SHA512.new(binascii.unhexlify(block_hash))
         private_key = RSA.import_key(private_key)
-        signature = PKCS1_v1_5.new(private_key).sign(block_hash)
+        signature = pkcs1_15.new(private_key).sign(block_hash)
         return signature
     
     def check_signature(self,block_hash,signature,public_key):
         block_hash = SHA512.new(binascii.unhexlify(block_hash))
-        public_key = RSA.import_key(public_key)     
+        public_key = RSA.import_key(public_key)
+        print(public_key)
+        print(block_hash)
+        print(signature)
+        
         try:
-            PKCS1_v1_5.new(public_key).verify(block_hash, signature)
+            pkcs1_15.new(public_key).verify(block_hash, signature)
             return True
         except (ValueError, TypeError):
             return False
-        
+    
+    
 class Database:
     def __init__(self):
         self.database_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../model/ballot_ledger_database.db"))

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, send_file
 import io
 from model import model
+import html
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 BLOCKCHAIN = model.Blockchain()
@@ -86,21 +87,53 @@ def confirmation_vote():
         block_to_add = BLOCKCHAIN.build_block(full_name,voter_id,state,vote)
         if block_to_add != {}:
             public_key = BLOCKCHAIN.add_block(block_to_add)
-            print(public_key)
-            message = 'Vote successfully cast!\nYou can verify your vote using the following PUBLIC KEY:\nENSURE YOU SAVE IT AS YOU WILL NOT SEE IT AGAIN!!!'
+            hash_of_voter = BLOCKCHAIN.get_voter_hash(full_name, voter_id, state)
+            
+            print("HERE:",public_key)
+            
+            message = 'Vote successfully cast!\nYou can verify your vote using the following PUBLIC KEY and HASH:\nENSURE YOU SAVE IT AS YOU WILL NOT SEE IT AGAIN!!!'
         else:
             'There was an error casting your vote! The blockchain may have been compromised!'
 
     except:
         message = 'There was an error casting your vote! Please try again later or contact our support team'
     
-    return render_template('confirmation.html', message=message,public_key=public_key)
+    return render_template('confirmation.html', message=message,public_key=public_key, hash_of_voter=hash_of_voter, full_name=full_name)
 
 # "Check Vote Status" on NavBar
 @app.route('/view-ledger', methods=['GET'])
 def view_ledger():
     records = BLOCKCHAIN.retrieve_all()
     return render_template('view-ledger.html', records=records)
+
+@app.route('/verify-vote', methods=['GET', 'POST'])
+def verify_vote():
+    if request.method == 'POST':
+        # Check if the user has uploaded both files
+        user_hash_file = request.files.get('user_hash')
+        public_key_file = request.files.get('public_key')
+        
+        if user_hash_file and public_key_file:
+            # Read the contents of the files (assuming they're text files)
+            user_hash = user_hash_file.read().decode('utf-8')  # Decoding from bytes to string
+            pk_bytes = public_key_file.read()
+            public_key = html.unescape(pk_bytes.decode('utf-8')).strip()  # Decoding from bytes to string
+            public_key = public_key[2:-1]
+            
+            print(public_key)
+            
+            # For example, print the contents to the console
+            print("User Hash:", user_hash)
+            print("Public Key:", public_key)
+            
+            block, message = BLOCKCHAIN.verify_vote(public_key, user_hash)
+
+            # Pass the data to a template or process further
+            return render_template('verify-vote.html', message=message, block=block)
+        else:
+            return "Error: Both files are required!", 400
+
+    return render_template('verify-vote.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
