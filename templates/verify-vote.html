@@ -1,0 +1,25 @@
+{% include "header.html" %}
+
+<body>
+    {% include "navbar.html" %}
+
+    <h1>Verify Vote</h1>
+
+    <form method="POST" action="/verify-vote" enctype="multipart/form-data">
+        <label for="user_hash">Upload User Hash (Text File):</label><br>
+        <input type="file" name="user_hash" id="user_hash" accept=".txt" required><br><br>
+
+        <label for="public_key">Upload Public Key (Text File):</label><br>
+        <input type="file" name="public_key" id="public_key" accept=".txt" required><br><br>
+
+        <input type="submit" value="Verify">
+    </form>
+
+    {% if message %}
+    <p>
+    {{ message }}
+    </p>
+    {% endif %}
+
+</body>
+</html>
