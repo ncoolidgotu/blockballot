@@ -3,43 +3,48 @@
 <body>
     {% include "navbar.html" %}
     
-    <h1>Blockchain Vote Records</h1>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Index</th>
-                <th>Previous Hash</th>
-                <th>Timestamp</th>
-                <th>Nonce</th>
-                <th>Hash of Voter</th>
-                <th>State</th>
-                <th>Vote</th>
-                <th>Block Hash</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Loop through the JSON data and display each record -->
-            {% for record in records %}
-            <tr>
-                <td>{{ record.index }}</td>
-                <td>
-                    <button class="toggle-btn" onclick="showPopup('previous-hash', '{{ record.previous_hash }}')">Show Hash</button>
-                </td>
-                <td>{{ record.timestamp }}</td>
-                <td>{{ record.nonce }}</td>
-                <td>
-                    <button class="toggle-btn" onclick="showPopup('hash-of-voter', '{{ record.hash_of_voter }}')">Show Hash</button>
-                </td>
-                <td>{{ record.state }}</td>
-                <td>{{ record.vote }}</td>
-                <td>
-                    <button class="toggle-btn" onclick="showPopup('own-hash', '{{ record.own_hash }}')">Show Hash</button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-container">
+        <h1>Blockchain Vote Records</h1>
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Index</th>
+                    <th>Previous Hash</th>
+                    <th>Timestamp</th>
+                    <th>Nonce</th>
+                    <th>Hash of Voter</th>
+                    <th>State</th>
+                    <th>Vote</th>
+                    <th>Block Hash</th>
+                    <th>Block Validation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Loop through the JSON data and display each record -->
+                {% for record, validation in data %}
+                <tr class="{{ 'valid' if validation == 'VALID' else 'not-valid' }}">
+                    <td>{{ record.index }}</td>
+                    <td>
+                        <button class="toggle-btn" onclick="showPopup('previous-hash', '{{ record.previous_hash }}')">Show Hash</button>
+                    </td>
+                    <td>{{ record.timestamp | epoch_to_datetime }}</td>  <!-- Using custom filter to convert timestamp -->
+                    <td>{{ record.nonce }}</td>
+                    <td>
+                        <button class="toggle-btn" onclick="showPopup('hash-of-voter', '{{ record.hash_of_voter }}')">Show Hash</button>
+                    </td>
+                    <td>{{ record.state }}</td>
+                    <td>{{ record.vote }}</td>
+                    <td>
+                        <button class="toggle-btn" onclick="showPopup('own-hash', '{{ record.own_hash }}')">Show Hash</button>
+                    </td>
+                    <td>
+                        {{ validation }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <!-- Popup Modal Structure -->
     <div id="popup-modal" class="popup-modal">
@@ -66,63 +71,11 @@
             document.getElementById('popup-modal').style.display = 'none';
         }
 
-        // CSS styling for the popup modal
+        // Hide the popup by default
         document.addEventListener("DOMContentLoaded", function() {
             var popupModal = document.getElementById('popup-modal');
-            popupModal.style.display = 'none';  // Hide the popup by default
+            popupModal.style.display = 'none';
         });
     </script>
-
-    <style>
-        /* Style for the popup modal */
-        .popup-modal {
-            display: none;  /* Hidden by default */
-            position: fixed;  /* Stay in place */
-            z-index: 1; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0, 0, 0, 0.4); /* Black with transparency */
-        }
-
-        .popup-content {
-            background-color: #fff;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%; /* Adjust width as necessary */
-            color: black; /* Ensure text color is black */
-        }
-
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close-btn:hover,
-        .close-btn:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .toggle-btn {
-            background-color: #f2f2f2;
-            border: 1px solid #ddd;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .toggle-btn:hover {
-            background-color: #ddd;
-        }
-    </style>
-
-
 </body>
 </html>

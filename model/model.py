@@ -7,7 +7,7 @@ import hashlib
 import requests
 from urllib.parse import urlparse
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import create_engine, Column, Integer, Sequence, MetaData, Table, String
+from sqlalchemy import create_engine, Column, Integer, Sequence, MetaData, Table, String, update
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
@@ -51,6 +51,8 @@ class Blockchain:
                 "vote":"genesis",
             }
             self.add_block(self.genesis_block)
+        
+        self.update_hashes()
 
     def Block_Hash_512(self,block):
         '''
@@ -192,20 +194,62 @@ class Blockchain:
                 return block, "INCORRECT KEY"
         else:
             return block, "INCORRECT HASH"
+    
+    def validate_block(self, current_block, previous_block):
+        previous_block_hash = self.Block_Hash_512(previous_block)
+        return current_block["previous_hash"] == previous_block_hash
+    
+    def validate_blockchain(self):
+        self.update_hashes()
+        records = self.retrieve_all()
+        validations = []
+        
+        broken_flag = False
+        n = 0
+        for i in records:
+            if not broken_flag:
+                if n == 0:
+                    validations.append('VALID')
+                else:
+                    current_record = records[n].copy()
+                    previous_record = records[n-1].copy()
+                    current_record.pop('own_hash')
+                    current_record.pop('signature')
+                    previous_record.pop('own_hash')
+                    previous_record.pop('signature')
+                    if self.validate_block(current_record, previous_record):
+                        validations.append("VALID")
+                    else:
+                        broken_flag = True
+                        validations[-1] = "NOT VALID"
+                        validations.append("NOT VALID")
+            else:
+                validations.append("NOT VALID")
+            n+=1
+        
+        data = zip(records, validations)
+        return data
+
+    def update_hashes(self):
+        dump = self.block_db.get_jsons()
+        
+        n = 1
+        for i in dump:
+            updated_hash = self.Block_Hash_512(i[0])
+            self.block_db.update_hash_by_index(n,updated_hash)
+            n += 1
+    
+    def tally_votes(self):
+        blockchain = self.retrieve_all()
+        votes = []
+        vote_state_data = []
+        
+        for block in blockchain:
+            votes.append(block["vote"])
+            vote_state_data.append([block["vote"],block["state"]])
+
+        return votes, vote_state_data
             
-    
-    
-    '''
-    self.genesis_block = {
-                "index":0,
-                "previous_hash":"0"*128,
-                "timestamp":0,
-                "nonce":0,
-                "hash_of_voter":"0"*128,
-                "state":"genesis",
-                "vote":"genesis",
-            }
-    '''
 
     def create_key_pair(self):
         key = RSA.generate(2048)
@@ -309,6 +353,21 @@ class Database:
             return result[0]
         finally:
             session.close()
+    
+    def update_hash_by_index(self, index_value, new_hash):
+        session = self.get_session()
+
+        # Update statement
+        stmt = (
+            update(self.block_table)
+            .where(self.block_table.c.block_id == index_value)
+            .values(hash=new_hash)
+        )
+
+        # Execute the update statement
+        session.execute(stmt)
+        session.commit()
+
         
         
 ########################################################################
