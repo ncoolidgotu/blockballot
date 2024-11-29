@@ -1,4 +1,3 @@
-from Crypto.Signature import PKCS1_v1_5
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
@@ -218,7 +217,7 @@ class Blockchain:
     def sign_block(self,block_hash,private_key):
         block_hash = SHA512.new(binascii.unhexlify(block_hash))
         private_key = RSA.import_key(private_key)
-        signature = PKCS1_v1_5.new(private_key).sign(block_hash)
+        signature = pkcs1_15.new(private_key).sign(block_hash)
         return signature
     
     def check_signature(self, block_hash, signature, public_key):
